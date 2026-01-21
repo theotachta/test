@@ -66,10 +66,12 @@ class LauncherApp(ttk.Frame):
 
     def _build_ui(self):
         self.master.title(APP_TITLE)
-        self.master.geometry("1024x640")
-        self.master.minsize(900, 600)
+        self.master.geometry("1180x720")
+        self.master.minsize(980, 640)
         self.master.configure(bg="#121317")
         self.master.overrideredirect(True)
+        self._center_window(1180, 720)
+        self.master.bind("<Map>", self._on_map_restore)
 
         style = ttk.Style()
         if "vista" in style.theme_names():
@@ -126,7 +128,7 @@ class LauncherApp(ttk.Frame):
             control_frame,
             text="—",
             width=3,
-            command=self.master.iconify,
+            command=self._minimize_window,
             style="Secondary.TButton",
         ).pack(side="left", padx=4)
         ttk.Button(
@@ -180,10 +182,14 @@ class LauncherApp(ttk.Frame):
         hero = tk.Canvas(page, bg="#121317", highlightthickness=0)
         hero.pack(fill="both", expand=True, padx=20, pady=20)
 
-        wallpaper = self._load_wallpaper()
-        if wallpaper is not None:
-            hero.create_image(0, 0, anchor="nw", image=wallpaper)
-            hero.wallpaper = wallpaper
+        self.wallpaper_original = self._load_wallpaper()
+        self.wallpaper_image = None
+        if self.wallpaper_original is not None:
+            self.wallpaper_image = self.wallpaper_original
+            self.wallpaper_canvas_id = hero.create_image(
+                0, 0, anchor="nw", image=self.wallpaper_image
+            )
+            hero.bind("<Configure>", self._update_wallpaper)
 
         hero.create_rectangle(
             0, 0, 1400, 120,
@@ -270,12 +276,13 @@ class LauncherApp(ttk.Frame):
 
         self.status_text = tk.Text(
             status_frame,
-            height=4,
+            height=6,
             wrap="word",
             state="disabled",
             bg="#1b1d28",
             fg="#e5e7ef",
             relief="flat",
+            font=("Segoe UI", 10),
         )
         self.status_text.pack(fill="both", expand=True, pady=(6, 0))
 
@@ -357,6 +364,45 @@ class LauncherApp(ttk.Frame):
         x = self.master.winfo_pointerx() - self._drag_x
         y = self.master.winfo_pointery() - self._drag_y
         self.master.geometry(f"+{x}+{y}")
+
+    def _center_window(self, width, height):
+        screen_width = self.master.winfo_screenwidth()
+        screen_height = self.master.winfo_screenheight()
+        x = int((screen_width - width) / 2)
+        y = int((screen_height - height) / 2)
+        self.master.geometry(f"{width}x{height}+{x}+{y}")
+
+    def _minimize_window(self):
+        self.master.overrideredirect(False)
+        self.master.iconify()
+
+    def _on_map_restore(self, event):
+        self.master.after(0, lambda: self.master.overrideredirect(True))
+
+    def _update_wallpaper(self, event):
+        if self.wallpaper_original is None:
+            return
+        canvas = event.widget
+        canvas_width = max(canvas.winfo_width(), 1)
+        canvas_height = max(canvas.winfo_height(), 1)
+        self.wallpaper_image = self._scale_image_to_fit(
+            self.wallpaper_original, canvas_width, canvas_height
+        )
+        canvas.itemconfig(self.wallpaper_canvas_id, image=self.wallpaper_image)
+
+    def _scale_image_to_fit(self, image, target_width, target_height):
+        img_width = image.width()
+        img_height = image.height()
+        if img_width == 0 or img_height == 0:
+            return image
+        scale = min(target_width / img_width, target_height / img_height)
+        if scale == 1:
+            return image
+        if scale > 1:
+            factor = max(int(scale * 100), 1)
+            return image.zoom(factor, factor).subsample(100, 100)
+        factor = max(int((1 / scale) * 100), 1)
+        return image.zoom(100, 100).subsample(factor, factor)
 
     def _show_first_run_help(self):
         if self.config_path.exists():
