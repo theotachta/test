@@ -13,9 +13,9 @@ DEFAULT_CONFIG = {
     "install_dir": "",
     "game_exe": "",
 }
-REPO_OWNER = "your-org"
-REPO_NAME = "your-game-repo"
-REPO_BRANCH = "main"
+REPO_OWNER = "theotachta"
+REPO_NAME = "test"
+REPO_BRANCH = "codex/create-simple-auto-patcher-for-game"
 MANIFEST_PATH = "manifest.json"
 
 
