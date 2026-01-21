@@ -13,9 +13,9 @@ DEFAULT_CONFIG = {
     "install_dir": "",
     "game_exe": "",
 }
-REPO_OWNER = "your-org"
-REPO_NAME = "your-game-repo"
-REPO_BRANCH = "main"
+REPO_OWNER = "theotachta"
+REPO_NAME = "test"
+REPO_BRANCH = "codex/create-simple-auto-patcher-for-game"
 MANIFEST_PATH = "manifest.json"
 
 
@@ -200,9 +200,9 @@ class LauncherApp(ttk.Frame):
         else:
             self._log("Local version: not installed")
 
-        to_download = self._diff_files(Path(install_dir), files)
+        to_download = self._diff_files(Path(install_dir), files, version)
         if not to_download:
-            self._log("No updates needed. You are up to date!")
+            self._log("No updates needed. You are good to go!")
             return
 
         self._log(f"Downloading {len(to_download)} file(s)...")
@@ -231,7 +231,7 @@ class LauncherApp(ttk.Frame):
         version_path = install_dir / "version.txt"
         version_path.write_text(str(version), encoding="utf-8")
 
-    def _diff_files(self, install_dir, files):
+    def _diff_files(self, install_dir, files, remote_version):
         to_download = []
         for item in files:
             rel_path = Path(item["path"])
@@ -239,6 +239,9 @@ class LauncherApp(ttk.Frame):
             if not local_path.exists():
                 to_download.append(item)
                 continue
+            if rel_path.name == "version.txt":
+                if self._local_version(install_dir) == str(remote_version):
+                    continue
             expected_hash = item.get("sha256")
             if expected_hash:
                 actual_hash = sha256_for_file(local_path)
