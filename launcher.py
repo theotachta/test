@@ -17,6 +17,7 @@ DEFAULT_CONFIG = {
     "repo_branch": "main",
     "manifest_path": "manifest.json",
 }
+REQUIRED_REPO_FIELDS = ("repo_owner", "repo_name", "repo_branch", "manifest_path")
 
 
 def read_json(path):
@@ -48,6 +49,7 @@ class LauncherApp(ttk.Frame):
         self.config = DEFAULT_CONFIG.copy()
         self._load_config()
         self._build_ui()
+        self._show_first_run_help()
 
     def _load_config(self):
         stored = read_json(self.config_path)
@@ -130,9 +132,9 @@ class LauncherApp(ttk.Frame):
         ttk.Button(action_frame, text="Save Settings", command=self._save_settings).pack(
             side="left"
         )
-        ttk.Button(action_frame, text="Check for Updates", command=self._start_update).pack(
-            side="left", padx=8
-        )
+        ttk.Button(
+            action_frame, text="Download/Update", command=self._start_update
+        ).pack(side="left", padx=8)
         self.play_button = ttk.Button(
             action_frame, text="Play", command=self._play_game
         )
@@ -152,6 +154,18 @@ class LauncherApp(ttk.Frame):
 
         self.pack(fill="both", expand=True)
         self._refresh_play_button()
+
+    def _show_first_run_help(self):
+        if self.config_path.exists():
+            return
+        messagebox.showinfo(
+            "Quick Setup",
+            "Welcome! To get started:\n\n"
+            "1) Fill in the Repository Settings.\n"
+            "2) Choose an install folder.\n"
+            "3) Choose your game executable.\n"
+            "4) Click Download/Update.\n",
+        )
 
     def _choose_install(self):
         folder = filedialog.askdirectory(title="Select game install folder")
@@ -196,6 +210,14 @@ class LauncherApp(ttk.Frame):
 
     def _start_update(self):
         self._save_settings()
+        missing = self._missing_repo_fields()
+        if missing:
+            messagebox.showerror(
+                "Missing Settings",
+                "Please fill in Repository Settings before updating:\n"
+                + ", ".join(missing),
+            )
+            return
         thread = threading.Thread(target=self._check_updates, daemon=True)
         thread.start()
 
@@ -290,6 +312,16 @@ class LauncherApp(ttk.Frame):
             self.status_text.configure(state="disabled")
 
         self.status_text.after(0, append)
+
+    def _missing_repo_fields(self):
+        missing = []
+        for key in REQUIRED_REPO_FIELDS:
+            if not str(self.config.get(key, "")).strip() or self.config.get(key) in (
+                "your-org",
+                "your-game-repo",
+            ):
+                missing.append(key)
+        return missing
 
 
 def main():

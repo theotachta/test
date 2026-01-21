@@ -19,6 +19,13 @@ This prototype launcher is a small Windows-only desktop app (Tkinter) that:
 python launcher.py
 ```
 
+On first launch, the app shows a quick setup prompt and guides you through:
+
+1. Filling in the Repository Settings.
+2. Choosing an install folder.
+3. Choosing the game executable.
+4. Clicking **Download/Update**.
+
 ## Configuration
 
 The launcher stores settings in `config.json` next to `launcher.py`.
@@ -29,6 +36,9 @@ Fields:
 - `repo_name`
 - `repo_branch`
 - `manifest_path`
+
+Tip: Update the defaults in `launcher.py` so the app works immediately after cloning
+for your repo.
 
 ## Manifest Format
 
