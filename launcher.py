@@ -383,8 +383,10 @@ class LauncherApp(ttk.Frame):
         scale = min(target_width / img_width, target_height / img_height)
         if scale >= 1:
             return image
-        factor = max(int((1 / scale) * 100), 1)
-        return image.zoom(100, 100).subsample(factor, factor)
+        factor = max(int(1 / scale), 1)
+        if factor < 2:
+            return image
+        return image.subsample(factor, factor)
 
     def _show_first_run_help(self):
         if self.config_path.exists():
