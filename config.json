@@ -1,0 +1,8 @@
+{
+  "install_dir": "C:/Users/teoae/Desktop/bolt/test",
+  "game_exe": "",
+  "repo_owner": "your-org",
+  "repo_name": "your-game-repo",
+  "repo_branch": "main",
+  "manifest_path": "manifest.json"
+}
