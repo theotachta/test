@@ -12,12 +12,11 @@ APP_TITLE = "Game Launcher"
 DEFAULT_CONFIG = {
     "install_dir": "",
     "game_exe": "",
-    "repo_owner": "your-org",
-    "repo_name": "your-game-repo",
-    "repo_branch": "main",
-    "manifest_path": "manifest.json",
 }
-REQUIRED_REPO_FIELDS = ("repo_owner", "repo_name", "repo_branch", "manifest_path")
+REPO_OWNER = "your-org"
+REPO_NAME = "your-game-repo"
+REPO_BRANCH = "main"
+MANIFEST_PATH = "manifest.json"
 
 
 def read_json(path):
@@ -99,34 +98,6 @@ class LauncherApp(ttk.Frame):
             side="left", padx=8
         )
 
-        repo_frame = ttk.LabelFrame(main_frame, text="Repository Settings")
-        repo_frame.pack(fill="x", pady=8)
-        repo_grid = ttk.Frame(repo_frame)
-        repo_grid.pack(fill="x", padx=8, pady=8)
-
-        self.owner_var = tk.StringVar(value=self.config.get("repo_owner", ""))
-        self.repo_var = tk.StringVar(value=self.config.get("repo_name", ""))
-        self.branch_var = tk.StringVar(value=self.config.get("repo_branch", ""))
-        self.manifest_var = tk.StringVar(value=self.config.get("manifest_path", ""))
-
-        ttk.Label(repo_grid, text="Owner").grid(row=0, column=0, sticky="w")
-        ttk.Entry(repo_grid, textvariable=self.owner_var).grid(
-            row=0, column=1, sticky="ew", padx=6
-        )
-        ttk.Label(repo_grid, text="Repo").grid(row=1, column=0, sticky="w")
-        ttk.Entry(repo_grid, textvariable=self.repo_var).grid(
-            row=1, column=1, sticky="ew", padx=6
-        )
-        ttk.Label(repo_grid, text="Branch").grid(row=2, column=0, sticky="w")
-        ttk.Entry(repo_grid, textvariable=self.branch_var).grid(
-            row=2, column=1, sticky="ew", padx=6
-        )
-        ttk.Label(repo_grid, text="Manifest").grid(row=3, column=0, sticky="w")
-        ttk.Entry(repo_grid, textvariable=self.manifest_var).grid(
-            row=3, column=1, sticky="ew", padx=6
-        )
-        repo_grid.columnconfigure(1, weight=1)
-
         action_frame = ttk.Frame(main_frame)
         action_frame.pack(fill="x", pady=10)
         ttk.Button(action_frame, text="Save Settings", command=self._save_settings).pack(
@@ -161,10 +132,9 @@ class LauncherApp(ttk.Frame):
         messagebox.showinfo(
             "Quick Setup",
             "Welcome! To get started:\n\n"
-            "1) Fill in the Repository Settings.\n"
-            "2) Choose an install folder.\n"
-            "3) Choose your game executable.\n"
-            "4) Click Download/Update.\n",
+            "1) Choose an install folder.\n"
+            "2) Choose your game executable.\n"
+            "3) Click Download/Update.\n",
         )
 
     def _choose_install(self):
@@ -186,10 +156,6 @@ class LauncherApp(ttk.Frame):
             {
                 "install_dir": self.install_var.get().strip(),
                 "game_exe": self.exe_var.get().strip(),
-                "repo_owner": self.owner_var.get().strip(),
-                "repo_name": self.repo_var.get().strip(),
-                "repo_branch": self.branch_var.get().strip(),
-                "manifest_path": self.manifest_var.get().strip(),
             }
         )
         self._save_config()
@@ -210,14 +176,6 @@ class LauncherApp(ttk.Frame):
 
     def _start_update(self):
         self._save_settings()
-        missing = self._missing_repo_fields()
-        if missing:
-            messagebox.showerror(
-                "Missing Settings",
-                "Please fill in Repository Settings before updating:\n"
-                + ", ".join(missing),
-            )
-            return
         thread = threading.Thread(target=self._check_updates, daemon=True)
         thread.start()
 
@@ -254,12 +212,9 @@ class LauncherApp(ttk.Frame):
         self._log("Update complete.")
 
     def _fetch_manifest(self):
-        owner = self.config["repo_owner"]
-        repo = self.config["repo_name"]
-        branch = self.config["repo_branch"]
-        manifest_path = self.config["manifest_path"]
         url = (
-            f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{manifest_path}"
+            f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/"
+            f"{REPO_BRANCH}/{MANIFEST_PATH}"
         )
         self._log(f"Fetching manifest: {url}")
         with urlopen(url) as response:
@@ -292,11 +247,9 @@ class LauncherApp(ttk.Frame):
         return to_download
 
     def _download_file(self, install_dir, relative_path):
-        owner = self.config["repo_owner"]
-        repo = self.config["repo_name"]
-        branch = self.config["repo_branch"]
         url = (
-            f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{relative_path}"
+            f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/"
+            f"{REPO_BRANCH}/{relative_path}"
         )
         target_path = install_dir / relative_path
         target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -312,17 +265,6 @@ class LauncherApp(ttk.Frame):
             self.status_text.configure(state="disabled")
 
         self.status_text.after(0, append)
-
-    def _missing_repo_fields(self):
-        missing = []
-        for key in REQUIRED_REPO_FIELDS:
-            if not str(self.config.get(key, "")).strip() or self.config.get(key) in (
-                "your-org",
-                "your-game-repo",
-            ):
-                missing.append(key)
-        return missing
-
 
 def main():
     root = tk.Tk()

@@ -21,24 +21,17 @@ python launcher.py
 
 On first launch, the app shows a quick setup prompt and guides you through:
 
-1. Filling in the Repository Settings.
-2. Choosing an install folder.
-3. Choosing the game executable.
-4. Clicking **Download/Update**.
+1. Choosing an install folder.
+2. Choosing the game executable.
+3. Clicking **Download/Update**.
 
 ## Configuration
 
 The launcher stores settings in `config.json` next to `launcher.py`.
 
-Fields:
-
-- `repo_owner`
-- `repo_name`
-- `repo_branch`
-- `manifest_path`
-
-Tip: Update the defaults in `launcher.py` so the app works immediately after cloning
-for your repo.
+If you want to change which repository the launcher downloads from, update the
+constants at the top of `launcher.py` (`REPO_OWNER`, `REPO_NAME`, `REPO_BRANCH`,
+and `MANIFEST_PATH`).
 
 ## Manifest Format
 
@@ -62,6 +55,8 @@ Get-FileHash .\\Game.exe -Algorithm SHA256
 
 ## Notes
 
+- This repo includes a sample `manifest.json` and `version.txt` (set to `1.0`) for
+  testing the update flow.
 - The Play button is enabled only when the executable path exists.
 - The updater downloads files directly from:
   `https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}`
