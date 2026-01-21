@@ -4,14 +4,13 @@ import os
 import threading
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
+from tkinter import messagebox, ttk
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 APP_TITLE = "Game Launcher"
 DEFAULT_CONFIG = {
     "install_dir": "",
-    "game_exe": "",
 }
 REPO_OWNER = "theotachta"
 REPO_NAME = "test"
@@ -51,6 +50,7 @@ class LauncherApp(ttk.Frame):
         self.config = DEFAULT_CONFIG.copy()
         self.remote_version = None
         self.update_required = False
+        self.install_root = Path(__file__).resolve().parent
         self._load_config()
         self._build_ui()
         self._show_first_run_help()
@@ -221,28 +221,13 @@ class LauncherApp(ttk.Frame):
         left_panel.pack(side="left", fill="both", expand=True, padx=16, pady=16)
 
         install_label = tk.Label(
-            left_panel, text="Installation", bg="#171922", fg="#a7abb8"
+            left_panel, text="Install Location", bg="#171922", fg="#a7abb8"
         )
         install_label.pack(anchor="w")
 
-        self.install_var = tk.StringVar(value=self.config.get("install_dir", ""))
-        install_entry = ttk.Entry(left_panel, textvariable=self.install_var)
+        self.install_var = tk.StringVar(value=str(self.install_root))
+        install_entry = ttk.Entry(left_panel, textvariable=self.install_var, state="readonly")
         install_entry.pack(fill="x", pady=(6, 10))
-        ttk.Button(
-            left_panel, text="Browse...", command=self._choose_install, style="Secondary.TButton"
-        ).pack(anchor="w")
-
-        exe_label = tk.Label(
-            left_panel, text="Game Executable", bg="#171922", fg="#a7abb8"
-        )
-        exe_label.pack(anchor="w", pady=(16, 0))
-
-        self.exe_var = tk.StringVar(value=self.config.get("game_exe", ""))
-        exe_entry = ttk.Entry(left_panel, textvariable=self.exe_var)
-        exe_entry.pack(fill="x", pady=(6, 10))
-        ttk.Button(
-            left_panel, text="Browse...", command=self._choose_exe, style="Secondary.TButton"
-        ).pack(anchor="w")
 
         right_panel = tk.Frame(control_panel, bg="#171922")
         right_panel.pack(side="right", fill="y", padx=16, pady=16)
@@ -276,7 +261,7 @@ class LauncherApp(ttk.Frame):
 
         self.status_text = tk.Text(
             status_frame,
-            height=6,
+            height=8,
             wrap="word",
             state="disabled",
             bg="#1b1d28",
@@ -396,11 +381,8 @@ class LauncherApp(ttk.Frame):
         if img_width == 0 or img_height == 0:
             return image
         scale = min(target_width / img_width, target_height / img_height)
-        if scale == 1:
+        if scale >= 1:
             return image
-        if scale > 1:
-            factor = max(int(scale * 100), 1)
-            return image.zoom(factor, factor).subsample(100, 100)
         factor = max(int((1 / scale) * 100), 1)
         return image.zoom(100, 100).subsample(factor, factor)
 
@@ -410,30 +392,17 @@ class LauncherApp(ttk.Frame):
         messagebox.showinfo(
             "Quick Setup",
             "Welcome! To get started:\n\n"
-            "1) Choose an install folder.\n"
-            "2) Choose your game executable.\n"
-            "3) Click Validate Data, then Update if needed.\n",
+            "1) Place melba.exe next to this launcher.\n"
+            "2) Click Validate Data, then Update if needed.\n",
         )
 
     def _choose_install(self):
-        folder = filedialog.askdirectory(title="Select game install folder")
-        if folder:
-            self.install_var.set(folder)
-
-    def _choose_exe(self):
-        filename = filedialog.askopenfilename(
-            title="Select game executable",
-            filetypes=[("Executable", "*.exe"), ("All files", "*.*")],
-        )
-        if filename:
-            self.exe_var.set(filename)
-            self._refresh_main_action_button()
+        return
 
     def _save_settings(self):
         self.config.update(
             {
-                "install_dir": self.install_var.get().strip(),
-                "game_exe": self.exe_var.get().strip(),
+                "install_dir": str(self.install_root),
             }
         )
         self._save_config()
@@ -441,13 +410,13 @@ class LauncherApp(ttk.Frame):
         self._refresh_main_action_button()
 
     def _refresh_main_action_button(self):
-        exe_path = Path(self.exe_var.get())
+        exe_path = self.install_root / "melba.exe"
         state = "normal" if exe_path.exists() else "disabled"
         if not self.update_required:
             self.main_action_button.config(state=state)
 
     def _play_game(self):
-        exe_path = Path(self.exe_var.get())
+        exe_path = self.install_root / "melba.exe"
         if not exe_path.exists():
             messagebox.showerror("Launch Error", "Game executable not found.")
             return
@@ -474,7 +443,7 @@ class LauncherApp(ttk.Frame):
         thread.start()
 
     def _check_updates(self, download):
-        install_dir = self.config.get("install_dir", "")
+        install_dir = str(self.install_root)
         if not install_dir:
             self._log("Please select an install folder before updating.")
             return

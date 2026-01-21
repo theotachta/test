@@ -2,7 +2,8 @@
 
 This prototype launcher is a small Windows-only desktop app (Tkinter) that:
 
-- Lets a player pick an install folder and game executable.
+- Uses the launcher's folder as the install directory and expects `melba.exe` to
+  live alongside the launcher.
 - Checks a GitHub-hosted `manifest.json` for version and file hashes.
 - Downloads only missing/changed files.
 - Writes a local `version.txt`.
@@ -22,9 +23,8 @@ python launcher.py
 
 On first launch, the app shows a quick setup prompt and guides you through:
 
-1. Choosing an install folder.
-2. Choosing the game executable.
-3. Clicking **Validate Data**, then **Update** if needed.
+1. Place `melba.exe` in the same folder as `launcher.py`.
+2. Click **Validate Data**, then **Update** if needed.
 
 The launcher also performs a startup check and will report if updates are
 available without downloading until you click **Update**. It estimates the
@@ -39,7 +39,8 @@ Add your artwork files here to customize the look:
 
 ## Configuration
 
-The launcher stores settings in `config.json` next to `launcher.py`.
+The launcher stores settings in `config.json` next to `launcher.py`. The
+install location is fixed to the launcher's folder.
 
 If you want to change which repository the launcher downloads from, update the
 constants at the top of `launcher.py` (`REPO_OWNER`, `REPO_NAME`, `REPO_BRANCH`,
